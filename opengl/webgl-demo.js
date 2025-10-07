@@ -29,9 +29,9 @@ void main(void) {
 }
 `;
 
-let prgrammInfo;
+let programInfo;
 let buffers;
-let squareRotation = 0.0;
+let cubeRotation = 0.0;
 let deltaTime = 0;
 let then = 0;
 
@@ -92,11 +92,11 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-
+let gl;
 main();
 function main() {
   const canvas = document.querySelector("#gl-canvas");
-  const gl = canvas.getContext("webgl");
+  gl = canvas.getContext("webgl");
   if (gl === null) {
     alert(
       "Unable to initialize WebGL. Your browser or machine may not support it.",
@@ -111,7 +111,7 @@ function main() {
   // Collect all the info needed to use the shader program.
 // Look up which attribute our shader program is using
 // for aVertexPosition and look up uniform locations.
-const programInfo = {
+programInfo = {
   program: shaderProgram,
   attribLocations: {
     vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
@@ -122,6 +122,10 @@ const programInfo = {
     modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
   },
 };
+
+buffers = initBuffers(gl);
+
+requestAnimationFrame(render);
 }
 
 
@@ -131,14 +135,8 @@ function render(now) {
   deltaTime = now - then;
   then = now;
 
-  drawScene(gl, programInfo, buffers, squareRotation);
-  squareRotation += deltaTime;
+  drawScene(gl, programInfo, buffers, cubeRotation);
+  cubeRotation += deltaTime;
 
   requestAnimationFrame(render);
-
-requestAnimationFrame(render);
 }
-
-main();
-
-requestAnimationFrame(render);
