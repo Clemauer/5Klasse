@@ -1,0 +1,58 @@
+# General ignores for all projects
+*~
+*.sw[mnpcod]
+*.log
+.tmp
+*.tmp
+*.tmp.*
+.sourcemaps/
+.versions/
+coverage/
+UserInterfaceState.xcuserstate
+$RECYCLE.BIN/
+Thumbs.db
+.DS_Store
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-project
+*.sublime-workspace
+.history/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Node / JS
+npm-debug.log
+yarn-error.log
+libpeerconnection.log
+testem.log
+
+# MedtIonic Project specific
+/MedtIonic/MedtIonic/node_modules/
+/MedtIonic/MedtIonic/.ionic/
+/MedtIonic/MedtIonic/www/
+/MedtIonic/MedtIonic/platforms/
+/MedtIonic/MedtIonic/plugins/
+/MedtIonic/MedtIonic/dist/
+/MedtIonic/MedtIonic/tmp/
+/MedtIonic/MedtIonic/out-tsc/
+/MedtIonic/MedtIonic/bazel-out/
+/MedtIonic/MedtIonic/.angular/
+/MedtIonic/MedtIonic/.sass-cache/
+/MedtIonic/MedtIonic/.nx/
+/MedtIonic/MedtIonic/connect.lock
+/MedtIonic/MedtIonic/coverage/
+/MedtIonic/MedtIonic/typings/
+
+# opengl Project specific
+/opengl/node_modules/

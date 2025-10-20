@@ -1,0 +1,7 @@
+{
+  "name": "MedtIonic",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
