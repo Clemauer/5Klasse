@@ -1,1 +1,21 @@
-<canvas #glCanvas width="640" height="480"></canvas>
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      WebGL Cube
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">WebGL Cube</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <canvas #glCanvas width="640" height="480"></canvas>
+  <ion-item>
+    <ion-label>Rotation Speed</ion-label>
+    <ion-range min="0.1" max="20" step="0.1" value="rotationSpeed" (ionChange)="onSpeedChange($event)"></ion-range>
+  </ion-item>
+</ion-content>

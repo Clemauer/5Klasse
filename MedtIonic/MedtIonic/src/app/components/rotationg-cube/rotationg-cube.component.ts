@@ -1,16 +1,19 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { mat4 } from 'gl-matrix';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
   selector: 'app-rotationg-cube',
   templateUrl: './rotationg-cube.component.html',
   styleUrls: ['./rotationg-cube.component.scss'],
-  standalone: true
+  standalone: true,
+  imports: [IonicModule, FormsModule]
 })
 export class RotationgCubeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('glCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
-
+  
   private gl: WebGLRenderingContext | null = null;
   private programInfo: any;
   private buffers: any;
@@ -18,11 +21,12 @@ export class RotationgCubeComponent implements OnInit, AfterViewInit, OnDestroy 
   private deltaTime = 0;
   private then = 0;
   private animationFrameId: number | null = null;
+  public rotationSpeed = 1.0;
 
   private vsSource = `
     attribute vec4 aVertexPosition;
     attribute vec4 aVertexColor;
-
+    
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
 
@@ -91,10 +95,14 @@ export class RotationgCubeComponent implements OnInit, AfterViewInit, OnDestroy 
 
     if (this.gl) {
       this.drawScene(this.gl, this.programInfo, this.buffers, this.cubeRotation);
-      this.cubeRotation += this.deltaTime;
+      this.cubeRotation += this.deltaTime * this.rotationSpeed;
     }
 
     this.animationFrameId = requestAnimationFrame(this.render);
+  }
+
+  public onSpeedChange(event: any) {
+    this.rotationSpeed = event.detail.value;
   }
 
   private initShaderProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string): WebGLProgram {

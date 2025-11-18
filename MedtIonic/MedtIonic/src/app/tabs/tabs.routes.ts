@@ -9,17 +9,17 @@ export const routes: Routes = [
       {
         path: 'tab1',
         loadComponent: () =>
-          import('../tab1/tab1.page').then((m) => m.Tab1Page),
+          import('../components/rotationg-cube/rotationg-cube.component').then((m) => m.RotationgCubeComponent),
       },
       {
         path: 'tab2',
         loadComponent: () =>
-          import('../tab2/tab2.page').then((m) => m.Tab2Page),
+          import('../components/task-list/task-list.component').then((m) => m.TaskListComponent),
       },
       {
         path: 'tab3',
         loadComponent: () =>
-          import('../tab3/tab3.page').then((m) => m.Tab3Page),
+          import('../components/basic-geometries/basic-geometries.component').then((m) => m.BasicGeometriesComponent),
       },
       {
         path: '',

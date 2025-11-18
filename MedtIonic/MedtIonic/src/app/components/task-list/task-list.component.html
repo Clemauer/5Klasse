@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Basic Geometries
+      Tasks
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -9,11 +9,11 @@
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Basic Geometries</ion-title>
+      <ion-title size="large">Tasks</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content [fullscreen]="true">
-    <div class="container">
-    <app-basic-geometries></app-basic-geometries>
+
+  <div *ngFor="let task of tasks">
+    <app-task [task]="task"></app-task>
   </div>
 </ion-content>

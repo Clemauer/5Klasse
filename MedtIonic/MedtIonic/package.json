@@ -27,9 +27,11 @@
     "@capacitor/keyboard": "7.0.3",
     "@capacitor/status-bar": "7.0.3",
     "@ionic/angular": "^8.0.0",
+    "@types/three": "^0.181.0",
     "gl-matrix": "^3.4.4",
     "ionicons": "^7.0.0",
     "rxjs": "~7.8.0",
+    "three": "^0.181.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
