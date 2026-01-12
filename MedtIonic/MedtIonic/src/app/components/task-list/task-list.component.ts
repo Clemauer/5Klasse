@@ -21,7 +21,8 @@ export class TaskListComponent  implements OnInit {
     this.tasks = [
       { name: 'Rotating Cube', resultLink: '/tabs/tab1' },
       { name: 'Task List', resultLink: '/tabs/tab2' },
-      { name: 'Basic Geometries', resultLink: '/tabs/tab3' }
+      { name: 'Basic Geometries', resultLink: '/tabs/tab3' },
+      { name: 'Height Map', resultLink: '/tabs/tab4' }
     ];
   }
 

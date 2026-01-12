@@ -22,6 +22,11 @@ export const routes: Routes = [
           import('../components/basic-geometries/basic-geometries.component').then((m) => m.BasicGeometriesComponent),
       },
       {
+        path: 'tab4',
+        loadComponent: () =>
+          import('../tab4/tab4.page').then((m) => m.Tab4Page),
+      },
+      {
         path: '',
         redirectTo: '/tabs/tab1',
         pathMatch: 'full',
