@@ -21,6 +21,7 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     this.initRenderer();
     this.createLights();
     this.createTerrain();
+    this.createWater();
     this.animate();
   }
 
@@ -79,6 +80,16 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
       pos.needsUpdate = true;
       geo.computeVertexNormals();
     });
+  }
+
+  private createWater() {
+    const geo = new THREE.PlaneGeometry(200, 200);
+    geo.rotateX(-Math.PI / 2);
+    const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: 0x1a6ea0, transparent: true, opacity: 0.7
+    }));
+    water.position.y = 0.5;
+    this.scene.add(water);
   }
 
   private animate = () => {
