@@ -50,7 +50,7 @@ export class HightMapComponent implements OnInit, AfterViewInit {
     this.controls = new OrbitControls(this.camera, this.canvas.nativeElement);
 
     const loader = new TextureLoader();
-    const texture = await loader.loadAsync('/assets/3x3.png');
+    const texture = await loader.loadAsync('/assets/heightmap.png');
 
     const canvasTexture = document.createElement('canvas');
     canvasTexture.width = texture.image.width;

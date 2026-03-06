@@ -27,6 +27,16 @@ export const routes: Routes = [
           import('../components/hight-map/hight-map.component').then((m) => m.HightMapComponent),
       },
       {
+        path: 'tab5',
+        loadComponent: () =>
+          import('../lighting-and-shadow/lighting-and-shadow.component').then((m) => m.LightingAndShadowComponent),
+      },
+      {
+        path: 'tab6',
+        loadComponent: () =>
+          import('../components/three-js/three-js.component').then((m) => m.ThreeJsComponent),
+      },
+      {
         path: '',
         redirectTo: '/tabs/tab1',
         pathMatch: 'full',
