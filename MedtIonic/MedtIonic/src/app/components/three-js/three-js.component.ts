@@ -83,11 +83,9 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   }
 
   private createWater() {
-    const geo = new THREE.PlaneGeometry(200, 200);
+    const geo = new THREE.PlaneGeometry(2000, 2000);
     geo.rotateX(-Math.PI / 2);
-    const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-      color: 0x1a6ea0, transparent: true, opacity: 0.7
-    }));
+    const water = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x1a6ea0 }));
     water.position.y = 0.5;
     this.scene.add(water);
   }
