@@ -141,13 +141,10 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     return h;
   }
 
-  // Flattens all airport areas and returns their heights for object placement
+  // Flattens the entire airport area to one uniform height
   private flattenTerrainForAirport(geometry: THREE.PlaneGeometry) {
-    const runway = this.flattenTerrainArea(geometry, this.runwayCenter.x, this.runwayCenter.z, this.runwayWidth, this.runwayLength, 1);
-    const tower = this.flattenTerrainArea(geometry, 8, this.runwayCenter.z, 3, 3, 0.75);
-    const hangar = this.flattenTerrainArea(geometry, -8, -5, 9, 7, 0.75);
-    const sideBuilding = this.flattenTerrainArea(geometry, -8, 5, 4, 4, 0.75);
-    return { runway, tower, hangar, sideBuilding };
+    const h = this.flattenTerrainArea(geometry, 0, 0, 20, this.runwayLength + 2, 2);
+    return { runway: h, tower: h, hangar: h, sideBuilding: h };
   }
 
   // Helper: create a mesh, position it and add it to the scene
@@ -163,9 +160,17 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     const ry = heights.runway + this.runwayYOffset; // Y position of the runway surface
     const cx = this.runwayCenter.x, cz = this.runwayCenter.z;
 
-    // Runway (dark asphalt)
+    // Runway (dark asphalt with normal map for surface detail)
+    const runwayMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    new THREE.TextureLoader().load('assets/asphalt-normal.jpg', (normalTex) => {
+      normalTex.wrapS = normalTex.wrapT = THREE.RepeatWrapping;
+      normalTex.repeat.set(2, 10);
+      runwayMat.normalMap = normalTex;
+      runwayMat.normalScale = new THREE.Vector2(3, 3);
+      runwayMat.needsUpdate = true;
+    });
     this.addMesh(new THREE.BoxGeometry(this.runwayWidth, 0.1, this.runwayLength),
-      new THREE.MeshStandardMaterial({ color: 0x333333 }), cx, ry, cz);
+      runwayMat, cx, ry, cz);
 
     // White centerline markings
     const markMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
