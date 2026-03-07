@@ -29,6 +29,11 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   private animationId = 0;                  // ID of the running animation loop (needed for cleanup)
   private controls!: OrbitControls;         // mouse controls for rotating/zooming the camera
 
+  // --- Lights (stored for day/night system) ---
+  private sun!: THREE.DirectionalLight;
+  private runwayLights: THREE.PointLight[] = [];
+  private towerLight!: THREE.PointLight;
+
   // Entry point: called once the canvas is available in the DOM
   ngAfterViewInit() {
     this.initScene();
@@ -68,9 +73,9 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
 
   // Adds a sun (DirectionalLight) and soft ambient light (AmbientLight)
   private createLights() {
-    const sun = new THREE.DirectionalLight(0xffffff, 1);
-    sun.position.set(5, 10, 5);
-    this.scene.add(sun);
+    this.sun = new THREE.DirectionalLight(0xffffff, 1);
+    this.sun.position.set(50, 80, 50);
+    this.scene.add(this.sun);
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.3));
   }
 
@@ -192,11 +197,23 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     // Side building
     this.addMesh(new THREE.BoxGeometry(3, 2, 3), new THREE.MeshStandardMaterial({ color: 0xaaaaaa }), -8, heights.sideBuilding + 1, 5);
 
-    // Runway lights: 3 yellow spheres on each side
+    // Runway lights: 3 yellow spheres on each side + PointLights
     const lightMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00 });
     const bulbGeo = new THREE.SphereGeometry(0.2);
-    for (const side of [-3.5, 3.5])
-      for (const z of [-12, 0, 12]) this.addMesh(bulbGeo, lightMat, side, ry + 0.2, cz + z);
+    for (const side of [-3.5, 3.5]) {
+      for (const z of [-12, 0, 12]) {
+        this.addMesh(bulbGeo, lightMat, side, ry + 0.2, cz + z);
+        const pl = new THREE.PointLight(0xffff00, 0.5, 15);
+        pl.position.set(side, ry + 0.4, cz + z);
+        this.scene.add(pl);
+        this.runwayLights.push(pl);
+      }
+    }
+
+    // Tower beacon light
+    this.towerLight = new THREE.PointLight(0xff0000, 1, 30);
+    this.towerLight.position.set(8, ty + 9.5, cz);
+    this.scene.add(this.towerLight);
   }
 
   // Returns the terrain height at a given (x, z) position using direct grid index lookup
@@ -286,6 +303,10 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   // Animation loop: runs every frame, updates camera controls and renders the scene
   private animate = () => {
     this.animationId = requestAnimationFrame(this.animate);
+    // Tower beacon blinks on/off every second
+    if (this.towerLight) {
+      this.towerLight.intensity = Math.sin(Date.now() * 0.005) > 0 ? 1 : 0;
+    }
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
