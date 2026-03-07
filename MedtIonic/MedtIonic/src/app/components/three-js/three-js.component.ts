@@ -1,6 +1,8 @@
 import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import * as dat from 'dat.gui';
 
 @Component({
   selector: 'app-three-js',
@@ -33,6 +35,11 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   private sun!: THREE.DirectionalLight;
   private runwayLights: THREE.PointLight[] = [];
   private towerLight!: THREE.PointLight;
+  private sky!: Sky;
+
+  // --- GUI ---
+  private gui!: dat.GUI;
+  guiParams = { timeOfDay: 12, flightSpeed: 50 };
 
   // Entry point: called once the canvas is available in the DOM
   ngAfterViewInit() {
@@ -43,20 +50,19 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     this.createTerrain();
     this.createWater();
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.initGUI();
     this.animate();
   }
 
-  // Creates the scene with sky blue background
   private initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x87ceeb);
   }
 
   // Creates the perspective camera with correct aspect ratio
   private initCamera() {
     const w = this.canvasRef.nativeElement.clientWidth || window.innerWidth;
     const h = this.canvasRef.nativeElement.clientHeight || window.innerHeight;
-    this.camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 2000);
     this.camera.position.set(0, 40, 60);
     this.camera.lookAt(0, 0, 0);
   }
@@ -69,14 +75,35 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     this.renderer = new THREE.WebGLRenderer({ canvas });
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.5;
   }
 
   // Adds a sun (DirectionalLight) and soft ambient light (AmbientLight)
   private createLights() {
     this.sun = new THREE.DirectionalLight(0xffffff, 1);
     this.sun.position.set(50, 80, 50);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.camera.left = -60;
+    this.sun.shadow.camera.right = 60;
+    this.sun.shadow.camera.top = 60;
+    this.sun.shadow.camera.bottom = -60;
+    this.sun.shadow.camera.near = 1;
+    this.sun.shadow.camera.far = 200;
     this.scene.add(this.sun);
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+    // Procedural sky with built-in sun
+    this.sky = new Sky();
+    this.sky.scale.setScalar(10000);
+    this.scene.add(this.sky);
+    const skyUniforms = this.sky.material.uniforms;
+    skyUniforms['turbidity'].value = 10;
+    skyUniforms['rayleigh'].value = 2;
+    skyUniforms['mieCoefficient'].value = 0.005;
+    skyUniforms['mieDirectionalG'].value = 0.8;
   }
 
   // Creates the island terrain: plane mesh deformed by a heightmap
@@ -84,6 +111,7 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     const geo = new THREE.PlaneGeometry(this.terrainSize, this.terrainSize, this.terrainSegments, this.terrainSegments);
     geo.rotateX(-Math.PI / 2); // Plane ist standardmäßig vertikal, drehen auf horizontal
     const terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x4a7c2e }));
+    terrain.receiveShadow = true;
     this.scene.add(terrain);
 
     // Load heightmap: pixel brightness controls the Y position of each vertex
@@ -159,6 +187,8 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   private addMesh(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number) {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     this.scene.add(mesh);
     return mesh;
   }
@@ -222,7 +252,7 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     const col = Math.round((x / this.terrainSize + 0.5) * this.terrainSegments);
     const row = Math.round((z / this.terrainSize + 0.5) * this.terrainSegments);
     const i = row * (this.terrainSegments + 1) + col;
-    return i >= 0 && i < pos.count ? pos.getY(i) : 0;
+    return pos.getY(i);
   }
 
   // Creates trees
@@ -300,13 +330,44 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // Creates the dat.GUI panel with time and speed controls
+  private initGUI() {
+    this.gui = new dat.GUI();
+    this.gui.add(this.guiParams, 'timeOfDay', 0, 24, 0.1).name('Uhrzeit');
+    this.gui.add(this.guiParams, 'flightSpeed', 0, 100, 1).name('Fluggeschwindigkeit');
+  }
+
+  // Updates lighting, sky and runway lights based on the current time of day
+  private updateDayNight() {
+    const t = this.guiParams.timeOfDay;
+
+    // Sun angle: rises at 6, peaks at 12, sets at 18
+    const sunAngle = ((t - 6) / 12) * Math.PI;
+    const sunY = Math.sin(sunAngle);
+    const sunX = Math.cos(sunAngle);
+    this.sun.position.set(sunX * 80, sunY * 80, 24);
+
+    // Update Sky shader sun position
+    this.sky.material.uniforms['sunPosition'].value.copy(this.sun.position);
+
+    // Sun intensity: full during day, zero at night
+    const dayFactor = Math.max(0, sunY);
+    this.sun.intensity = dayFactor;
+
+    // Runway lights: brighter at night
+    const runwayIntensity = 1 - dayFactor;
+    for (const light of this.runwayLights) {
+      light.intensity = runwayIntensity * 1.5;
+    }
+
+    // Tower beacon blinks on/off every second
+    this.towerLight.intensity = Math.sin(Date.now() * 0.005) > 0 ? runwayIntensity * 2 : 0;
+  }
+
   // Animation loop: runs every frame, updates camera controls and renders the scene
   private animate = () => {
     this.animationId = requestAnimationFrame(this.animate);
-    // Tower beacon blinks on/off every second
-    if (this.towerLight) {
-      this.towerLight.intensity = Math.sin(Date.now() * 0.005) > 0 ? 1 : 0;
-    }
+    this.updateDayNight();
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
@@ -314,18 +375,12 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
   // Cleanup when the component is destroyed: free GPU resources
   ngOnDestroy() {
     cancelAnimationFrame(this.animationId);
+    this.gui.destroy();
     this.controls.dispose();
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
         obj.geometry.dispose();
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-        mats.forEach(m => {
-          if (m instanceof THREE.MeshStandardMaterial) {
-            m.map?.dispose();
-            m.normalMap?.dispose();
-          }
-          m.dispose();
-        });
+        (obj.material as THREE.Material).dispose();
       }
     });
     this.renderer.dispose();
