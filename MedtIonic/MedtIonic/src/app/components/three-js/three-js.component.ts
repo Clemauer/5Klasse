@@ -104,6 +104,9 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
       pos.needsUpdate = true;
       geo.computeVertexNormals(); // recalculate lighting normals
       this.createAirport(airportHeights);
+      this.createTrees(geo);
+      this.createRocks(geo);
+      this.createClouds();
     });
   }
 
@@ -196,6 +199,90 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
       for (const z of [-12, 0, 12]) this.addMesh(bulbGeo, lightMat, side, ry + 0.2, cz + z);
   }
 
+  // Returns the terrain height at a given (x, z) position using direct grid index lookup
+  private getTerrainHeight(geometry: THREE.PlaneGeometry, x: number, z: number): number {
+    const pos = geometry.attributes['position'];
+    const col = Math.round((x / this.terrainSize + 0.5) * this.terrainSegments);
+    const row = Math.round((z / this.terrainSize + 0.5) * this.terrainSegments);
+    const i = row * (this.terrainSegments + 1) + col;
+    return i >= 0 && i < pos.count ? pos.getY(i) : 0;
+  }
+
+  // Creates trees
+  private createTrees(terrainGeo: THREE.PlaneGeometry) {
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+    const trunkGeo = new THREE.CylinderGeometry(0.2, 0.3, 2, 6);
+    const leafGeo = new THREE.ConeGeometry(1.5, 3, 6);
+
+    // Tree positions
+    const positions = [
+      [20, 5], [22, -8], [18, 12], [-20, 10], [-22, -12],
+      [25, -15], [-18, 18], [15, -20], [-25, -5], [28, 0],
+      [-15, -22], [30, 10], [-28, 8], [12, 22], [-12, -25],
+    ];
+
+    for (const [x, z] of positions) {
+      const y = this.getTerrainHeight(terrainGeo, x, z);
+      // skip positions that are at water level
+      if (y < 1) continue; 
+      this.addMesh(trunkGeo, trunkMat, x, y + 1, z);
+      this.addMesh(leafGeo, leafMat, x, y + 3.5, z);
+    }
+  }
+
+  // Creates rocks
+  private createRocks(terrainGeo: THREE.PlaneGeometry) {
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x777777, flatShading: true });
+    const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+
+    const rockPositions: [number, number][] = [
+      [25, 15], [-20, -18], [30, -10], [-30, 5],
+      [15, 25], [-25, 20], [35, 0], [-10, 30],
+    ];
+
+    for (const [x, z] of rockPositions) {
+      const y = this.getTerrainHeight(terrainGeo, x, z);
+      if (y < 1) continue;
+      const scale = 0.5 + Math.random() * 1.2;
+      const mesh = this.addMesh(rockGeo, rockMat, x, y + scale * 0.4, z);
+      mesh.scale.setScalar(scale);
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+    }
+  }
+
+  // Creates soft cloud clusters 
+  private createClouds() {
+    const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+
+    const cloudPositions = [
+      [0, 35, -20], [20, 38, 10], [-25, 33, -15], [30, 36, 25],
+      [-15, 40, 20], [10, 34, -30], [-30, 37, 0],
+    ];
+
+    const sphereGeo = new THREE.SphereGeometry(1, 8, 6);
+
+    for (const [cx, cy, cz] of cloudPositions) {
+      const group = new THREE.Group();
+      // Each cloud is 3–5 overlapping spheres
+      const count = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const r = 1.5 + Math.random() * 2;
+        const sphere = new THREE.Mesh(sphereGeo, cloudMat);
+        sphere.position.set(
+          (Math.random() - 0.5) * 4,
+          (Math.random() - 0.5) * 1.5,
+          (Math.random() - 0.5) * 4
+        );
+        // scale and flatten
+        sphere.scale.set(r, r * 0.6, r);
+        group.add(sphere);
+      }
+      group.position.set(cx, cy, cz);
+      this.scene.add(group);
+    }
+  }
+
   // Animation loop: runs every frame, updates camera controls and renders the scene
   private animate = () => {
     this.animationId = requestAnimationFrame(this.animate);
@@ -211,7 +298,13 @@ export class ThreeJsComponent implements AfterViewInit, OnDestroy {
       if (obj instanceof THREE.Mesh) {
         obj.geometry.dispose();
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-        mats.forEach(m => m.dispose());
+        mats.forEach(m => {
+          if (m instanceof THREE.MeshStandardMaterial) {
+            m.map?.dispose();
+            m.normalMap?.dispose();
+          }
+          m.dispose();
+        });
       }
     });
     this.renderer.dispose();
